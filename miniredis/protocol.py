@@ -16,3 +16,24 @@ class ProtocolHandler(object):
             '*': self.handle_array,         #array of other type elements
             '%': self.handle_dict,          #dictionary of key or value pairs
         }
+
+def handle_request(self, socket_file):
+    #grabbing the first byte of the message, the sees which data type it is from the handlers
+    first_byte = socket_file.read(1)
+
+    #checks if empty
+    if not first_byte:
+        raise Disconnect()
+
+
+    try:
+        #converting the byte into plain string
+        byte = first_byte.decode('utf-8')
+        #goes to whichever handler method that know how to parse this data type
+        return self.handlers[byte](socket_file)
+    
+    #if the first byte is undetictable
+    except KeyError:
+        raise CommandError('bad request')
+
+
