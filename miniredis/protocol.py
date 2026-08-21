@@ -55,4 +55,12 @@ def handle_error(self, socket_file):
     return Error(decoded_string)
 
 
+def handle_integer(self, socket_file):
+    #reading raw bytes up to line ending and decoding into plain text
+    line_string = socket_file.readline()
+    decoded_string = line_string.decode('utf-8').rstrip('\r\n')
+
+    #wrapping decoded string integer so it turns into a rela number for example "1234" --> 1234
+    return int(decoded_string)
+
 
