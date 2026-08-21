@@ -37,3 +37,22 @@ def handle_request(self, socket_file):
         raise CommandError('bad request')
 
 
+def handle_simple_string(self, socket_file):
+    #reading raw bytes up to line ending and decoding into plain text
+    line_string = socket_file.readline()
+    decoded_string = line_string.decode('utf-8')
+
+    #returning the plain string
+    return decoded_string.rstrip('\r\n')
+
+
+def handle_error(self, socket_file):
+    #reading raw bytes up to line ending and decoding into plain text
+    line_string = socket_file.readline()
+    decoded_string = line_string.decode('utf-8').rstrip('\r\n')
+
+    #wrapping string in a error namedtuple so the software can reconginze that it is an error from a normal string value
+    return Error(decoded_string)
+
+
+
