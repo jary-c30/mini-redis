@@ -102,3 +102,82 @@ def handle_dict(self, socket_file):
     return dict(zip(elements[::2], elements[1::2]))
 
 
+from io import BytesIO
+
+def write_response(self, socket_file, data):
+    #bulding the entire serialized response in memory this matters for nested
+    #arrays or dict, where we would we otherwise make many small, slow writes to the network
+    buf = BytesIO()
+
+    #delegate to _write, which will inspect the type of data and recusively
+    #serialize into a buf, ex. handling nested lists/dicts.
+    self._write(buf, data)
+
+    #moving to the start of the buffer so we can read everything thats written
+    #instead of where the cursor remained
+    buf.seek(0)
+
+    #sending the built response back to the user, along with flushing it to make sure 
+    # it is actually sent over the network rather than remain in an internal buffer.
+    socket_file.write(buf.getvalue())
+    socket_file.flush()
+
+
+def _write(self, buf, data):
+
+    #this is a seperate if branch made to convert the data from string to bytes, so
+    # both the regular trings and raw bytes get handled identically by the flow blocks below
+    if isinstance(data, str):
+        data = data.encode('utf-8')
+
+    #binary-safe string type ($), structure: a length prefixed line, followed with the raw data, and followed 
+    #by trailing \r\n.
+    if isinstance(data, bytes):
+
+        #writes the header line "$<length>\r\n"
+        buf.write(('$%s\r\n' % len(data)).encode('utf-8'))
+        #write the acutal data
+        buf.write(data)
+        #write the trailing line ending
+        buf.write(b'\r\n')
+
+    #integer type (:) only prefix, the number and the line ending no length_prefixing
+    #needed since int do not contain \r\n
+    elif isinstance(data, int):
+        buf.write((':%s\r\n' % data).encode('utf-8'))
+
+    #error type (-) format is just prefix and the message text on one line, no length prefix
+    #data.message is used to pull actual text from error namedtuple
+    elif isinstance(data, Error):
+        buf.write(('-%s\r\n' % data.message).encode('utf-8'))
+
+    #array type (*) wire format is the '*' prefix + element count, followed by each element written out in its own
+    #full wire fomat
+    elif isinstance(data, (list, tuple)):
+
+        #write the "*<count>\r\n" header line
+        buf.write(('*%s\r\n' % len(data)).encode('utf-8'))
+
+        #recursivley writes each item into the sam buffer. if item iteself is list or dict
+        #it reenters _write and hits the matching branch
+        for item in data:
+            self._write(buf, item)
+
+    #dict type (%) wire format is the '%' prefix + number of key_value PAIRS, followed by each key followed by its value
+    #each written in its own full wire format
+    elif isinstance(data, dict):
+
+        #writes "%<pair count>\r\n" header line
+        #since '%' is python formatting place holder, '%%' to produce one literal '%' in the output
+        #then '%s' as the actual placehodler for len(data)
+        buf.write(('%%%s\r\n' % len(data)).encode('utf-8'))
+
+        #for each key it recusiviley write the key then immediately writes its matching value
+        #right after same idea as the list branch
+        for key in data:
+            self._write(buf, key)
+            self._write(buf, data[key])
+
+    #NULL/None case resue '$' with a length of -1 meaning no value at all
+    elif data is None:
+        buf.write(('$-1\r\n').encode('utf-8'))
