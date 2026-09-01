@@ -85,7 +85,29 @@ def delete(self, key):
     else:
         return 0
 
+#deletes everything in self._kv and returns the amount of values it deleted from the dict
 def flush(self):
     amount = len(self._kv)
     self._kv.clear()
     return amount
+
+#with the * infront of the key it means it can take any amount of arguments, without knowing how much we actually need
+def mget(self, *keys):
+    #goes through each key in keys and looks up value in self._kv and collecting them for a returning list
+    return [self._kv.get(key) for key in keys]
+
+
+def mset(self, *items):
+
+    #every other elemetn starting at index 0 are key and starting at 1 are values
+    data = zip(items[::2], items[1::2])
+
+    #storing the pair(key, value) into data store
+    for key, value in data:
+        self._kv[key] = value
+
+    #returning the number of pairs
+    return (len(items) // 2)
+
+def run(self):
+    self._server.serve_forever()
