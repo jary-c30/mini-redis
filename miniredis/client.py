@@ -1,7 +1,7 @@
 from gevent import socket
 
 from miniredis.exceptions import CommandError
-from miniredis.protocol import ProtocolHandler
+from miniredis.protocol import ProtocolHandler, Error
 
 class Client(object):
     def __init__(self, host='127.0.0.1', port=31337):

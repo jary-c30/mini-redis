@@ -3,7 +3,7 @@ from gevent.pool import Pool
 from gevent.server import StreamServer
 
 from miniredis.exceptions import CommandError, Disconnect
-from miniredis.protocol import ProtocolHandler
+from miniredis.protocol import ProtocolHandler, Error
 
 
 #sets up the server with a pool to limit concurrent clients, along with the TCP server bound to host/port
@@ -16,7 +16,7 @@ class Server(object):
         self._commands = self.get_commands()
 
     def connection_handler(self, conn, address):
-        socket_file = conn.makefile('rwd')
+        socket_file = conn.makefile('rwb')
 
         #an infinite loop
         while True:
@@ -59,7 +59,7 @@ class Server(object):
             raise CommandError('Must be list or simple string')
 
         #first elemnt is always the command name, upper case it so get, Get, or GET are treated the same
-        command = data[0].upper()
+        command = data[0].decode('utf-8').upper()
 
         #looking up the command name returns None if command is not recognized
         command_method = self._commands.get(command, None)
