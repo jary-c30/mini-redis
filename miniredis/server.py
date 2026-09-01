@@ -33,10 +33,10 @@ class Server(object):
             except CommandError as exc:
                 resp = Error(exc.args[0])
 
-        #whatever resp ended being Error or successful it sends back to the user useing write_repsonse
+            #whatever resp ended being Error or successful it sends back to the user useing write_repsonse
             self._protocol.write_response(socket_file,resp)
 
-#defining a dictionary of commands, building a lookup table
+    #defining a dictionary of commands, building a lookup table
     def get_commands(self):
         return {
             'GET': self.get,
