@@ -84,3 +84,8 @@ def delete(self, key):
         return 1
     else:
         return 0
+
+def flush(self):
+    amount = len(self._kv)
+    self._kv.clear()
+    return amount
