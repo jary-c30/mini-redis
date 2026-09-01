@@ -15,99 +15,99 @@ class Server(object):
         self._kv = {}
         self._commands = self.get_commands()
 
-def connection_handler(self, conn, address):
-    socket_file = conn.makefile('rwd')
+    def connection_handler(self, conn, address):
+        socket_file = conn.makefile('rwd')
 
-    #an infinite loop
-    while True:
+        #an infinite loop
+        while True:
 
-        #if user disconnects from the server, program catches a break and stops proccessing
-        try:
-            data = self._protocol.handle_request(socket_file)
-        except Disconnect:
-            break
+            #if user disconnects from the server, program catches a break and stops proccessing
+            try:
+                data = self._protocol.handle_request(socket_file)
+            except Disconnect:
+                break
 
-        #if use makes an error, it doesnt mean the user want to disconnect it just flags wrong command or other errors
-        try:
-            resp = self.get_response(data)
-        except CommandError as exc:
-            resp = Error(exc.args[0])
+            #if use makes an error, it doesnt mean the user want to disconnect it just flags wrong command or other errors
+            try:
+                resp = self.get_response(data)
+            except CommandError as exc:
+                resp = Error(exc.args[0])
 
         #whatever resp ended being Error or successful it sends back to the user useing write_repsonse
-        self._protocol.write_response(socket_file,resp)
+            self._protocol.write_response(socket_file,resp)
 
 #defining a dictionary of commands, building a lookup table
-def get_commands(self):
-    return {
-        'GET': self.get,
-        'SET': self.set,
-        'DELETE': self.delete,
-        'FLUSH': self.flush,
-        'MGET': self.mget,
-        'MSET': self.mset,
-    }
+    def get_commands(self):
+        return {
+            'GET': self.get,
+            'SET': self.set,
+            'DELETE': self.delete,
+            'FLUSH': self.flush,
+            'MGET': self.mget,
+            'MSET': self.mset,
+        }
 
 
-def get_response(self, data):
+    def get_response(self, data):
 
-    #if commands come as a plain string
-    if not isinstance(data, list):
-        data = data.split()
+        #if commands come as a plain string
+        if not isinstance(data, list):
+            data = data.split()
 
-    #check if data is non-empty if not than riase command error with message
-    if not isinstance(data, list) or not data:
-        raise CommandError('Must be list or simple string')
+        #check if data is non-empty if not than riase command error with message
+        if not isinstance(data, list) or not data:
+            raise CommandError('Must be list or simple string')
 
-    #first elemnt is always the command name, upper case it so get, Get, or GET are treated the same
-    command = data[0].upper()
+        #first elemnt is always the command name, upper case it so get, Get, or GET are treated the same
+        command = data[0].upper()
 
-    #looking up the command name returns None if command is not recognized
-    command_method = self._commands.get(command, None)
+        #looking up the command name returns None if command is not recognized
+        command_method = self._commands.get(command, None)
 
-    if not command_method:
-        raise CommandError('Unrecognized command: %s' % command)
+        if not command_method:
+            raise CommandError('Unrecognized command: %s' % command)
 
-    #call the command method unpacking the remaing elemts of data as single arguments
-    #ex --> ['GET', 'key1'] is ['key1'] unpacked as command_method ('key1')
-    return command_method(*data[1:])
+        #call the command method unpacking the remaing elemts of data as single arguments
+        #ex --> ['GET', 'key1'] is ['key1'] unpacked as command_method ('key1')
+        return command_method(*data[1:])
 
-def get(self, key):
-    return self._kv.get(key)
+    def get(self, key):
+        return self._kv.get(key)
 
-def set(self, key, value):
-    self._kv[key] = value
-    return 1
-
-def delete(self, key):
-    if key in self._kv:
-        del self._kv[key]
-        return 1
-    else:
-        return 0
-
-#deletes everything in self._kv and returns the amount of values it deleted from the dict
-def flush(self):
-    amount = len(self._kv)
-    self._kv.clear()
-    return amount
-
-#with the * infront of the key it means it can take any amount of arguments, without knowing how much we actually need
-def mget(self, *keys):
-    #goes through each key in keys and looks up value in self._kv and collecting them for a returning list
-    return [self._kv.get(key) for key in keys]
-
-
-def mset(self, *items):
-
-    #every other elemetn starting at index 0 are key and starting at 1 are values
-    data = zip(items[::2], items[1::2])
-
-    #storing the pair(key, value) into data store
-    for key, value in data:
+    def set(self, key, value):
         self._kv[key] = value
+        return 1
 
-    #returning the number of pairs
-    return (len(items) // 2)
+    def delete(self, key):
+        if key in self._kv:
+            del self._kv[key]
+            return 1
+        else:
+            return 0
 
-def run(self):
-    self._server.serve_forever()
+    #deletes everything in self._kv and returns the amount of values it deleted from the dict
+    def flush(self):
+        amount = len(self._kv)
+        self._kv.clear()
+        return amount
+
+    #with the * infront of the key it means it can take any amount of arguments, without knowing how much we actually need
+    def mget(self, *keys):
+        #goes through each key in keys and looks up value in self._kv and collecting them for a returning list
+        return [self._kv.get(key) for key in keys]
+
+
+    def mset(self, *items):
+
+        #every other elemetn starting at index 0 are key and starting at 1 are values
+        data = zip(items[::2], items[1::2])
+
+        #storing the pair(key, value) into data store
+        for key, value in data:
+            self._kv[key] = value
+
+        #returning the number of pairs
+        return (len(items) // 2)
+
+    def run(self):
+        self._server.serve_forever()
