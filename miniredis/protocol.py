@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from miniredis.exceptions import CommandError, Disconnect
 
 from collections import namedtuple
