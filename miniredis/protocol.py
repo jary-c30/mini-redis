@@ -12,7 +12,7 @@ class ProtocolHandler(object):
             '+': self.handle_simple_string, #simple string
             '-': self.handle_error,         #error message
             ':': self.handle_integer,       #integer
-            '$': self.hanlde_string,        #length-prefixed binary data
+            '$': self.handle_string,        #length-prefixed binary data
             '*': self.handle_array,         #array of other type elements
             '%': self.handle_dict,          #dictionary of key or value pairs
         }

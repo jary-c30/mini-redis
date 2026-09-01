@@ -8,7 +8,7 @@ class Client(object):
         self._protocol = ProtocolHandler()
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect((host, port))
-        self._fh = self._socket.makefile('rwd')
+        self._fh = self._socket.makefile('rwb')
 
     #args becomes ex. ('GET', 'key1')
     def execute(self, *args):
